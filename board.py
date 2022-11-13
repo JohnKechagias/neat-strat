@@ -3,19 +3,23 @@ from itertools import product
 
 import arcade
 from constants import *
-from hexagon import Hexagon
+from hexagon import Hexagon, Menu
 
 
 
 class Board(arcade.Window):
     def __init__(self):
-        super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, title=TITLE, samples=16)
+        super().__init__(WINDOW_WIDTH, WINDOW_HEIGHT, title=TITLE, samples=16)
         self.setup()
 
     def setup(self):
         self.round = 1
-        self.curr_player = Player.PLAYER1
         self.start_tile = None
+
+        self.curr_player = Player.PLAYER1
+        self.action = Action.MOVE
+        self.origin_tile = ''
+        self.destination_tile = ''
 
         # The coords of the tile that the mouse is hovering over.
         # If curr_tile = (-1, -1), it means that the mouse isn't
@@ -27,12 +31,15 @@ class Board(arcade.Window):
         # The neighbouring tiles of the current tile that the current
         # player can select.
         self.tile_to_highlight: list[int] = []
-        # A list with all the default tile shapes. Its used to speed up
-        # the rendering of board in its default state, meaning when all
-        # the tiles are owned by nature. So when a tile is owned by nature,
-        # we don't have to explicitly render it by adding it to the
-        # tiles_to_render list.
-        self.tile_shapes_list = arcade.ShapeElementList()
+        # A list with all the default tile shapes and the menu shape. Its
+        # used to speed up the rendering of board in its default state,
+        # meaning when all the tiles are owned by nature. So when a tile
+        # is owned by nature, we don't have to explicitly render it by
+        # adding it to the tiles_to_render list.
+        self.shapes_list = arcade.ShapeElementList()
+
+        menu_center = self.width / 2, WINDOW_HEIGHT - MENU_PADDING - MENU_HEIGHT / 2
+        self.menu = Menu(menu_center, color.LIGHT_GRAY)
 
         # A list with all the valid tile coordinates, meaning from (0, 0),
         # (0, 1) ... (BOARD_SIZE, BOARD_SIZE)
@@ -43,7 +50,7 @@ class Board(arcade.Window):
 
         # Populate the shape list with the default tile shapes.
         for hex in self.tiles:
-            self.tile_shapes_list.append(hex.shape)
+            self.shapes_list.append(hex.shape)
 
         # Initialize the starting tile for each player.
         self.tiles[0].owner = Player.PLAYER1
@@ -65,6 +72,8 @@ class Board(arcade.Window):
         else:
             self.curr_player = Player.PLAYER1
 
+        # Start tile needs to be reset so that the next player
+        # can't use the starting tile of the previous player.
         self.start_tile = None
 
 
@@ -77,7 +86,15 @@ class Board(arcade.Window):
         draw_start_time = timeit.default_timer()
 
         arcade.start_render()
-        self.tile_shapes_list.draw()
+        self.shapes_list.draw()
+
+        self.menu.render(
+            self.curr_player,
+            self.action,
+            self.round,
+            self.origin_tile,
+            self.destination_tile
+        )
 
         for coords in self.tiles_to_render:
             self.tiles[coords].render()
@@ -120,6 +137,12 @@ class Board(arcade.Window):
                     and self.curr_tile in self.get_neightbours(self.start_tile):
                     self.move(self.start_tile, self.curr_tile, 2)
 
+
+    def on_key_press(self, key, key_modifiers):
+        """ Called whenever a key on the keyboard is pressed. """
+        if key == 113 and self.start_tile is not None:
+            self.produce(self.start_tile)
+
     def move(self, start: Coords, end: Coords, troops: int):
         start_tile = self.tile(start)
         end_tile = self.tile(end)
@@ -140,10 +163,15 @@ class Board(arcade.Window):
             start_tile.owner = Player.NATURE
             self.tiles_to_render.remove(self.hex_index_from_grid_coords(start))
 
+        self.action = Action.MOVE
+        self.origin_tile = self.start_tile
+        self.destination_tile = self.curr_tile
+
         self.end_round()
 
     def produce(self, coords: Coords):
         self.tile(coords).troops += 1
+        self.action = Action.PRODUCE
         self.end_round()
 
     def grid_coords_from_data_coords(self, x: int, y: int) -> tuple[int, int]:

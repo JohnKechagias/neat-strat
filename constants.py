@@ -12,6 +12,11 @@ class Player(IntEnum):
     PLAYER2 = 2
 
 
+class Action(IntEnum):
+    MOVE = 0,
+    PRODUCE = 1
+
+
 PLAYER_COLOR: dict[Player, Color] = {
     Player.NATURE: color.LIGHT_GRAY,
     Player.PLAYER1: color.RED_VIOLET,
@@ -32,9 +37,15 @@ HEX_RADIUS = 50
 HEX_PADDING = 10
 # Padding between the board and the window
 BOARD_PADDING = 50
+# Padding between the menu and the window
+MENU_PADDING = 10
+# Menu height, where all the stats are displayed
+MENU_HEIGHT = 40
+# Menu width, where all the stats are displayed
+MENU_WIDTH = 600
 # Color theme of the program
 COLOR_THEME = Theme.DARK
-# Title of window
+# Title of the window
 TITLE = 'Sreak'
 
 
@@ -43,9 +54,12 @@ HALF_HEX_RADIUS = HEX_RADIUS / 2
 # Radius of the circle inside of the hexagon
 HEX_S_RADIUS = HEX_RADIUS * math.sin(math.radians(60))
 
-SCREEN_WIDTH = math.ceil(2 * (BOARD_SIZE + 0.5) * HEX_S_RADIUS +\
+WINDOW_WIDTH = math.ceil(2 * (BOARD_SIZE + 0.5) * HEX_S_RADIUS +\
             (BOARD_SIZE + 1) * HEX_PADDING + 2 * BOARD_PADDING)
-SCREEN_HEIGHT = math.ceil(2 * BOARD_SIZE * HEX_S_RADIUS + 2 * BOARD_PADDING)
+WINDOW_HEIGHT = math.ceil(2 * BOARD_SIZE * HEX_S_RADIUS + 2 * BOARD_PADDING +\
+    MENU_HEIGHT + MENU_PADDING)
+
+MENU_WIDTH = min(MENU_WIDTH, math.ceil((8 / 10) * WINDOW_WIDTH - 2 * MENU_PADDING))
 
 X_STEP = 2 * HEX_S_RADIUS + HEX_PADDING
 Y_STEP = (3 / 2) * HEX_RADIUS + HEX_PADDING

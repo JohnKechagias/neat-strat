@@ -1,6 +1,59 @@
+from typing import Literal
 import arcade
 from constants import *
 
+
+
+class Menu:
+    def __init__(self, coords: Coords, color: Color) -> None:
+        self.coords = coords
+        self.color = color
+
+    @property
+    def shape(self) -> arcade.Shape:
+        return arcade.create_rectangle_outline(
+            *self.coords,
+            MENU_WIDTH,
+            MENU_HEIGHT,
+            self.color,
+            1
+        )
+
+    def render(
+        self,
+        curr_Player: Player,
+        action: Action,
+        round: int,
+        start: Coords,
+        end: Coords
+    ):
+        arcade.draw_text(
+            curr_Player.name,
+            self.coords[0] - (1/2) *  MENU_WIDTH,
+            self.coords[1],
+            arcade.color.WHITE_SMOKE,
+            16,
+            width=20
+        )
+
+        arcade.draw_text(
+            f'Round {round}',
+            self.coords[0] - (1 / 10) * MENU_WIDTH,
+            self.coords[1],
+            arcade.color.WHITE_SMOKE,
+            16,
+            width=20,
+            align='left'
+        )
+
+        arcade.draw_text(
+            f'{action.name} {start} -> {end}',
+            self.coords[0] + (2 / 10) *  MENU_WIDTH,
+            self.coords[1],
+            arcade.color.WHITE_SMOKE,
+            16,
+            width=20
+        )
 
 
 class Hexagon:
