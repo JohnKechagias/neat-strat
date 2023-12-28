@@ -1,0 +1,2 @@
+NodeID = int
+LinkID = int
