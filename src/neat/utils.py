@@ -2,15 +2,15 @@ from dataclasses import dataclass
 from random import random
 from typing import Iterable, Literal
 
-from numba import jit
+from numba import njit
 
 
-@jit
+@njit
 def clamp(value: float, lower: float, upper: float) -> float:
     return min(max(value, lower), upper)
 
 
-@jit
+@njit
 def randon_sign() -> Literal[-1, 1]:
     return 1 if random() > 0.5 else -1
 

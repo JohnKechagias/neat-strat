@@ -1,8 +1,8 @@
-from logging import Logger
 from math import ceil
 
-from neat.genome import Genome
+from neat.genomes.genome import Genome
 from neat.innovation import InnovationRecord
+from neat.logging import LOGGER
 from neat.parameters import Parameters
 from neat.species import Species, SpeciesInfo
 from neat.utils import get_genome_id, mean
@@ -13,24 +13,22 @@ class Pool:
         self,
         params: Parameters,
         innov_record: InnovationRecord,
-        logger: Logger,
     ):
         self.genomes: list[Genome] = []
         self.species: list[Species] = []
-        self.logger = logger
         self.params = params
         self.innov_record = innov_record
-        self.generation = 0
+        self.generation: int = 0
+        self.prev_species_info: list[SpeciesInfo] = []
 
         self.initialize()
-        self.prev_species_info: list[SpeciesInfo] = []
 
     def initialize(self):
         for _ in range(self.params.population):
             self.genomes.append(self._get_new_genome())
 
         for genome in self.genomes:
-            self._assign_genome(genome)
+            self._assign_genome_to_species(genome)
 
     def evolve(self):
         remaining_species = self._speciate()
@@ -42,7 +40,7 @@ class Pool:
         remaining_species = [s for s in remaining_species if not is_stagnant(s)]
 
         if len(remaining_species) == 0:
-            self.logger.warning(
+            LOGGER.warning(
                 "There are no remaining species after evolution. "
                 "Consider increasing the compatibility threshold."
             )
@@ -58,7 +56,7 @@ class Pool:
         adjusted_fitnesses = [f.update_adjusted_fitness() for f in remaining_species]
         adj_fintess_sum = sum(adjusted_fitnesses)
         avg_adjusted_fitness = mean(adjusted_fitnesses)
-        self.logger.info(f"Average adjusted fitness: {avg_adjusted_fitness:.3f}")
+        LOGGER.info(f"Average adjusted fitness: {avg_adjusted_fitness:.3f}")
 
         # Contains the number of genomes that each species must generate
         # to fill out the population.
@@ -86,7 +84,7 @@ class Pool:
         self.genomes = offsprings
         self.generation += 1
 
-    def _assign_genome(self, genome: Genome):
+    def _assign_genome_to_species(self, genome: Genome):
         for species in self.species:
             if species.try_assign_genome(genome):
                 return

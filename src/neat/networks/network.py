@@ -12,7 +12,7 @@ class Network(ABC):
     def __init__(self, nodes: dict[NodeID, Node], links: dict[LinkID, Link]):
         self.nodes = nodes
         self.graph = Graph()
-        self.values = {node: 0.0 for node in nodes.keys()}
+        self.node_values = {node: 0.0 for node in nodes.keys()}
 
         for node_id in nodes.keys():
             self.graph.add_node(node_id)

@@ -17,8 +17,8 @@ class FeedForwardNetwork(Network):
             node.add_value(value)
 
         for node_id in self.graph.toposort():
-            self.values[node_id] = self.nodes[node_id].activate()
+            self.node_values[node_id] = self.nodes[node_id].activate()
             for neighbor, weight in self.graph.get_neighbors(node_id).items():
-                self.nodes[neighbor].add_value(self.values[node_id] * weight)
+                self.nodes[neighbor].add_value(self.node_values[node_id] * weight)
 
-        return [value for node, value in self.values.items() if node in output_nodes]
+        return [v for node, v in self.node_values.items() if node in output_nodes]

@@ -37,28 +37,35 @@ class Genome:
         nodes: Optional[dict[int, Node]] = None,
         links: Optional[dict[int, Link]] = None,
     ):
-        self.id: int = id
-        self.fitness = 0.0
-        self.innov_record = innovation_record
+        if not nodes:
+            nodes = {}
 
-        if nodes is None and links is None:
+        if not links:
+            links = {}
+
+        self.id: int = id
+        self.fitness: float = 0.0
+        self.innov_record: InnovationRecord = innovation_record
+
+        self.nodes: dict[NodeID, Node] = nodes
+        self.links: dict[LinkID, Link] = links
+        self._node_id = max(list(nodes.keys()), default=-1)
+        self._link_id = max(list(links.keys()), default=-1)
+
+        if not nodes and not links:
             self.initialize_default_genome()
 
     def initialize_default_genome(self):
-        self.nodes: dict[NodeID, Node] = {}
-        self.links: dict[LinkID, Link] = {}
-
-        self._node_id = -1
-        self._link_id = -1
-
         input_nodes: dict[int, Node] = {}
         output_nodes: dict[int, Node] = {}
+
         for _ in range(self.params.number_of_inputs):
             node = self.create_new_node(NodeType.INPUT)
             input_nodes[node.id] = node
 
         for _ in range(self.params.number_of_outputs):
             node = self.create_new_node(NodeType.OUTPUT)
+
         for input in input_nodes.values():
             for output in output_nodes.values():
                 link = self.create_new_link(input, output)
@@ -93,16 +100,12 @@ class Genome:
                 nodes[key] = copy.copy(node1)
 
         id = utils.get_genome_id()
-
-        genome = Genome(id, self.innov_record, nodes, links)
-        genome._node_id = max(primary_parent._node_id, secondary_parent._node_id)
-        genome._link_id = max(primary_parent._link_id, secondary_parent._link_id)
-        return genome
+        return Genome(id, self.innov_record, nodes, links)
 
     def get_distance(self, other: Genome) -> float:
-        node_distance = 0.0
-        disjoint_nodes = 0
-        num_of_common_node_genes = 0
+        node_distance: float = 0.0
+        disjoint_nodes: int = 0
+        num_of_common_node_genes: int = 0
 
         if self.nodes or other.nodes:
             for node_id, node in self.nodes.items():
@@ -291,8 +294,7 @@ class Genome:
 
     def create_new_link(self, in_node: Node, out_node: Node, weight: float = 1) -> Link:
         id = self.get_link_id(in_node, out_node)
-        traits = LinkTraits()
-        traits.weight = weight
+        traits = LinkTraits(weight=weight)
         return Link(id, in_node, out_node, traits)
 
     def reenable_link(self):
