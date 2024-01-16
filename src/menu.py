@@ -1,9 +1,11 @@
 import arcade
 from constants import *
+from arcade.types import Color
+from arcade.shape_list import Shape, create_rectangle_outline
 
 
 class Menu:
-    def __init__(self, point: Point, color: RGB, width: int, height: int):
+    def __init__(self, point: Point, color: Color, width: int, height: int):
         self.point = point
         self.color = color
         self.width = width
@@ -13,8 +15,8 @@ class Menu:
         self.label_color = colors.WHITE_SMOKE
 
     @property
-    def shape(self) -> arcade.Shape:
-        return arcade.create_rectangle_outline(
+    def shape(self) -> Shape:
+        return create_rectangle_outline(
             *self.point, self.width, self.height, self.color, 1
         )
 
@@ -28,8 +30,8 @@ class Menu:
     ):
         arcade.draw_text(
             text=curr_player.name,
-            start_x=self.point[0] - (1 / 2) * MENU_WIDTH,
-            start_y=self.point[1],
+            start_x=int(self.point[0] - (1 / 2) * MENU_WIDTH),
+            start_y=int(self.point[1]),
             color=self.label_color,
             font_size=self.label_font_size,
             width=self.label_width,
@@ -37,8 +39,8 @@ class Menu:
 
         arcade.draw_text(
             text=f"Round {round}",
-            start_x=self.point[0] - (1 / 10) * MENU_WIDTH,
-            start_y=self.point[1],
+            start_x=int(self.point[0] - (1 / 10) * MENU_WIDTH),
+            start_y=int(self.point[1]),
             color=self.label_color,
             font_size=self.label_font_size,
             width=self.label_width,
@@ -46,8 +48,8 @@ class Menu:
 
         arcade.draw_text(
             text=f"{action.name} {start} -> {end}",
-            start_x=self.point[0] + (2 / 10) * MENU_WIDTH,
-            start_y=self.point[1],
+            start_x=int(self.point[0] + (2 / 10) * MENU_WIDTH),
+            start_y=int(self.point[1]),
             color=self.label_color,
             font_size=self.label_font_size,
             width=self.label_width,

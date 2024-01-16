@@ -1,4 +1,5 @@
-arcade
 numpy
-numba
-PyYAML
+nptyping
+beartype
+matplotlib
+arcade @ git+https://github.com/pythonarcade/arcade.git@development

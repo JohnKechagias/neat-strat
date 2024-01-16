@@ -1,2 +1,0 @@
-NodeID = int
-LinkID = int

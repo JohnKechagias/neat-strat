@@ -1,8 +1,8 @@
 import math
 from enum import IntEnum
-
-RGB = tuple[int, int, int]
+from arcade.types import Color
 import arcade.color as colors
+from nptyping import NDArray, Int8, Shape
 
 
 class Player(IntEnum):
@@ -12,11 +12,11 @@ class Player(IntEnum):
 
 
 class Action(IntEnum):
-    MOVE = (0,)
+    MOVE = 0
     PRODUCE = 1
 
 
-PLAYER_COLOR: dict[Player, RGB] = {
+PLAYER_COLOR: dict[Player, Color] = {
     Player.NATURE: colors.LIGHT_GRAY,
     Player.PLAYER1: colors.RED_VIOLET,
     Player.PLAYER2: colors.EMERALD,
@@ -24,12 +24,12 @@ PLAYER_COLOR: dict[Player, RGB] = {
 
 
 class Theme(IntEnum):
-    LIGHT = (0,)
+    LIGHT = 0
     DARK = 1
 
 
 # Board is square shaped so, size = 6 corresponds to a 6x6 board
-BOARD_SIZE = 6
+BOARD_SIZE = 5
 # Radius of the circle outside of the hexagon
 HEX_RADIUS = 50
 # Padding between the hexagons
@@ -46,6 +46,7 @@ MENU_WIDTH = 600
 COLOR_THEME = Theme.DARK
 # Title of the window
 TITLE = "Sreak"
+MAX_TROOPS = 20
 
 
 # Half the radius of a hex
@@ -74,3 +75,4 @@ R_1 = BOARD_PADDING + HEX_S_RADIUS - HEX_RADIUS
 # Type definitions
 Coords = tuple[int, int]
 Point = tuple[float, float]
+State = NDArray[Shape[f"{BOARD_SIZE}, {BOARD_SIZE}"], Int8]
