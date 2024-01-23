@@ -18,9 +18,7 @@ class Params:
         + 2 * board_padding
     )
     board_height = math.ceil(
-        2 * board_size * hex_s_radius
-        + 2 * board_padding + menu_height
-        + menu_padding
+        2 * board_size * hex_s_radius + 2 * board_padding + menu_height + menu_padding
     )
     menu_width = math.ceil((8 / 10) * board_width - 2 * menu_padding)
     x_step = 2 * hex_s_radius + hex_padding

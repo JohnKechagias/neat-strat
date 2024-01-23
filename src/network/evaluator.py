@@ -1,9 +1,11 @@
 import math
 from typing import Callable, Literal
-import numpy as np
-from constants import BOARD_SIZE, Coords, State, MAX_TROOPS
-from beartype import beartype
 
+import numpy as np
+from beartype import beartype
+from nptyping import Int8
+
+from constants import BOARD_SIZE, MAX_TROOPS, Coords, State
 
 neighbors_mappers: dict[Coords, list[Coords]] = {
     (0, 0): [(1, 0), (0, 1)],
@@ -30,7 +32,7 @@ neighbors_mappers: dict[Coords, list[Coords]] = {
     (4, 1): [(3, 1), (4, 2), (4, 0)],
     (4, 2): [(3, 2), (4, 3), (4, 1), (3, 3), (3, 1)],
     (4, 3): [(3, 3), (4, 4), (4, 2)],
-    (4, 4): [(3, 4), (4, 3), (3, 3)]
+    (4, 4): [(3, 4), (4, 3), (3, 3)],
 }
 
 
@@ -47,7 +49,6 @@ def get_neighbors(x: int, y: int) -> list[Coords]:
     else:
         neighbors.append((x + 1, y + 1))
         neighbors.append((x + 1, y - 1))
-
 
     def is_neighbor_valid(coords: Coords) -> bool:
         x, y = coords
@@ -119,18 +120,22 @@ def get_possible_states(state: State) -> list[State]:
     return states_after_opposing_player_responds
 
 
-def activate(state: State) -> float:
-    return 1.0
-
-
-def min_max(state: State, depth: int, maximizes_player: bool, alpha: float, beta: float, max_depth: int) -> float:
+def min_max(
+    state: State,
+    evaluator: Callable[[State], float],
+    depth: int,
+    maximizes_player: bool,
+    alpha: float,
+    beta: float,
+    max_depth: int,
+) -> float:
     if depth == max_depth:
-        return activate(state)
+        return evaluator(state)
 
     if maximizes_player:
         best_value = -math.inf
-        for child in get_children(state, -1):
-            value = min_max(child, depth+1, False, alpha, beta, max_depth)
+        for child in get_children(state, 1):
+            value = min_max(child, evaluator, depth + 1, False, alpha, beta, max_depth)
             best_value = max(best_value, value)
             alpha = max(alpha, best_value)
 
@@ -140,8 +145,8 @@ def min_max(state: State, depth: int, maximizes_player: bool, alpha: float, beta
         return best_value
     else:
         best_value = +math.inf
-        for child in get_children(state, 1):
-            value = min_max(child, depth+1, True, alpha, beta, max_depth)
+        for child in get_children(state, -1):
+            value = min_max(child, evaluator, depth + 1, True, alpha, beta, max_depth)
             best_value = min(best_value, value)
             beta = min(beta, best_value)
 
@@ -151,14 +156,13 @@ def min_max(state: State, depth: int, maximizes_player: bool, alpha: float, beta
         return best_value
 
 
-
-def select_best_move(state: State, activate: Callable[[State], float], depth: int):
+def select_best_move(state: State, evaluator: Callable[[State], float], depth: int):
     possible_moves = get_possible_moves(state)
 
     best_move = None
     best_value = -math.inf
-    for move, state in possible_moves.items():
-        value = min_max(state, 0, False, -math.inf, math.inf, depth)
+    for move, p_state in possible_moves.items():
+        value = min_max(p_state, evaluator, 0, False, -math.inf, math.inf, depth)
 
         if value > best_value:
             best_move = move
@@ -166,12 +170,21 @@ def select_best_move(state: State, activate: Callable[[State], float], depth: in
 
     return best_move
 
-state = get_random_state()
-print(select_best_move(state, lambda x: 1.0, 1))
-
 
 def test_select_best_move():
-    def activate(var: list[int]) -> float:
-        if var == [-1, 1]:
+    def activate(var: State) -> float:
+        return var[0][3]
 
+    state = np.asarray(
+        [
+            [16, 0, -15, 14, -3],
+            [6, -8, 6, -19, -13],
+            [-1, 7, 13, 6, -12],
+            [5, -13, -5, -15, 7],
+            [-5, 15, 11, 17, -17],
+        ],
+        dtype=Int8,
+    )
 
+    best_move = select_best_move(state, activate, 3)
+    assert best_move == ((0, 3), (1, 3), 14)

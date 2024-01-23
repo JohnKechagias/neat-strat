@@ -1,12 +1,13 @@
 from typing import Optional
 
 import arcade
-from arcade.types import Color
 from arcade.shape_list import create_polygon
+from arcade.types import Color
+
 from constants import *
 
 
-class Hexagon:
+class Tile:
     def __init__(self, coords: Coords, owner: Player = Player.NATURE, troops: int = 0):
         self.coords = coords
         self.troops = troops
@@ -18,6 +19,17 @@ class Hexagon:
         self._neighbors = self._pre_compute_neighbors(coords)
         self._highlight_color = self._compute_highlight_color(self._color)
         self._shape = create_polygon(self.vertices, self._color)
+
+        self.troops_text = arcade.Text(
+            str(self.troops),
+            self.data_coords[0],
+            self.data_coords[1],
+            colors.BLACK,
+            16,
+            width=20,
+            align="center",
+            anchor_x="center",
+        )
 
     @property
     def neighbors(self) -> list[int]:
@@ -48,16 +60,8 @@ class Hexagon:
         arcade.draw_polygon_filled(self.vertices, color)
 
         if self.owner != Player.NATURE:
-            arcade.draw_text(
-                str(self.troops),
-                self.data_coords[0],
-                self.data_coords[1],
-                colors.BLACK,
-                16,
-                width=20,
-                align="center",
-                anchor_x="center",
-            )
+            self.troops_text.text = str(self.troops)
+            self.troops_text.draw()
 
     def render_highlighted(self):
         self.render(self._highlight_color)
@@ -82,7 +86,7 @@ class Hexagon:
             return x >= 0 and x < BOARD_SIZE and y >= 0 and y < BOARD_SIZE
 
         neighbors = list(filter(is_neighbor_valid, neighbors))
-        return [Hexagon.hex_index_from_grid_coords(i) for i in neighbors]
+        return [Tile.hex_index_from_grid_coords(i) for i in neighbors]
 
     @staticmethod
     def _precompute_data_coords(coords: Coords) -> Coords:
@@ -117,7 +121,7 @@ class Hexagon:
         g = min(color.g + offset, 255)
         b = min(color.b + offset, 255)
         return Color(r, g, b)
-    
+
     @staticmethod
     def hex_index_from_grid_coords(coords: Coords) -> int:
         x, y = coords

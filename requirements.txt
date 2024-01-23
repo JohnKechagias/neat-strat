@@ -1,5 +1,7 @@
 numpy
 nptyping
 beartype
+graphviz
 matplotlib
+neat-python
 arcade @ git+https://github.com/pythonarcade/arcade.git@development

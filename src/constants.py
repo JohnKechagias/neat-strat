@@ -1,8 +1,9 @@
 import math
 from enum import IntEnum
-from arcade.types import Color
+
 import arcade.color as colors
-from nptyping import NDArray, Int8, Shape
+from arcade.types import Color
+from nptyping import Int8, NDArray, Shape
 
 
 class Player(IntEnum):

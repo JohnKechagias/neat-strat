@@ -3,10 +3,11 @@ from itertools import product
 from typing import Optional
 
 import arcade
+
 from constants import *
-from hexagon import Hexagon
 from menu import Menu
 from parameters import Params
+from tile import Tile
 
 
 class Board(arcade.Window):
@@ -28,14 +29,14 @@ class Board(arcade.Window):
         self.start_tile_index: Optional[int] = None
         self.curr_player = Player.PLAYER1
         self.action = Action.MOVE
-        self.origin_tile_coords = (-1, -1)
-        self.destination_tile_coords = (-1, -1)
+        self.origin_tile_coords = (0, 0)
+        self.destination_tile_coords = (0, 0)
 
         # The tile index that the mouse is hovering over.
         # If curr_tile is None, it means that the mouse isn't
         # currently hovering over a valid tile.
         self.curr_tile_index: Optional[int] = None
-        # The tiles that need to be rendered meaning the tiles 
+        # The tiles that need to be rendered meaning the tiles
         # that have an owner that isn't the default one (nature).
         self.tiles_to_render: list[int] = []
         # The neighbouring tiles of the currently selected tile.
@@ -46,11 +47,11 @@ class Board(arcade.Window):
         # is owned by nature, we don't have to explicitly render it by
         # adding it to the tiles_to_render list.
         self.shapes_list = arcade.shape_list.ShapeElementList()
-        self.text_list: list[arcade.Text] = []
+        self.text_objects: list[arcade.Text] = []
 
         menu_center = (
             self.width / 2,
-            self.height - Params.menu_padding - Params.menu_height / 2
+            self.height - Params.menu_padding - Params.menu_height / 2,
         )
         menu_width = Params.menu_width
         menu_heigh = Params.menu_height
@@ -59,8 +60,8 @@ class Board(arcade.Window):
         # A list with all the valid tile coordinates, meaning from (0, 0),
         # (0, 1) ... (BOARD_SIZE, BOARD_SIZE)
         tile_coords = [Coords(i) for i in product(range(self.board_size), repeat=2)]
-        # A list that countains all the actual tile instances. In this case, hexagons.
-        self.tiles = [Hexagon(i) for i in tile_coords]
+        # A list that countains all of the tile instances. In this case, hexagons.
+        self.tiles = [Tile(i) for i in tile_coords]
 
         # Populate the shape list with the default tile shapes.
         for tile in self.tiles:
@@ -75,7 +76,7 @@ class Board(arcade.Window):
                 align="left",
                 anchor_x="center",
             )
-            self.text_list.append(text)
+            self.text_objects.append(text)
 
         # Initialize the starting tile for each player.
         player_1_starting_tile = 0
@@ -107,7 +108,7 @@ class Board(arcade.Window):
         self.clear()
         self.shapes_list.draw()
         self.menu.render(
-            self.curr_player,
+            self.curr_player.name,
             self.action,
             self.round,
             self.origin_tile_coords,
@@ -123,7 +124,7 @@ class Board(arcade.Window):
             for coords in self.tiles_to_highlight:
                 self.tiles[coords].render_highlighted()
 
-        for text in self.text_list:
+        for text in self.text_objects:
             text.draw()
 
         self.draw_time = timeit.default_timer() - draw_start_time
@@ -158,7 +159,10 @@ class Board(arcade.Window):
                 # starting tile isn't the same as the current tile, allow the move
                 # action.
                 if self.start_tile_index is not None:
-                    if self.curr_tile_index in self.tiles[self.start_tile_index].neighbors:
+                    if (
+                        self.curr_tile_index
+                        in self.tiles[self.start_tile_index].neighbors
+                    ):
                         self.move(self.start_tile_index, self.curr_tile_index, 2)
                     elif self.curr_tile_index == self.start_tile_index:
                         self.produce(self.curr_tile_index)
@@ -196,7 +200,7 @@ class Board(arcade.Window):
         self.destination_tile_coords = tile.coords
         self.end_round()
 
-    def get_tile_from_coords(self, x: int, y: int) -> Hexagon:
+    def get_tile_from_coords(self, x: int, y: int) -> Tile:
         return self.tiles[self.get_tile_index_from_grid_coords(x, y)]
 
     def get_tile_coords_from_data_coords(self, x: int, y: int) -> Optional[Coords]:
@@ -226,7 +230,7 @@ def main():
         Params.board_height,
         Params.board_title,
         Params.board_size,
-        16
+        16,
     )
     board.run()
 
