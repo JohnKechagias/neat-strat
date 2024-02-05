@@ -1,9 +1,11 @@
 import math
 from enum import IntEnum
+from typing import Callable
 
 import arcade.color as colors
+import nptyping
 from arcade.types import Color
-from nptyping import Int8, NDArray, Shape
+from nptyping import Int8, NDArray
 
 
 class Player(IntEnum):
@@ -15,6 +17,13 @@ class Player(IntEnum):
 class Action(IntEnum):
     MOVE = 0
     PRODUCE = 1
+
+
+class GameState(IntEnum):
+    LOSS = -1
+    DRAW = 0
+    WIN = 1
+    ONGOING = 2
 
 
 PLAYER_COLOR: dict[Player, Color] = {
@@ -76,4 +85,6 @@ R_1 = BOARD_PADDING + HEX_S_RADIUS - HEX_RADIUS
 # Type definitions
 Coords = tuple[int, int]
 Point = tuple[float, float]
-State = NDArray[Shape[f"{BOARD_SIZE}, {BOARD_SIZE}"], Int8]
+State = NDArray[nptyping.Shape[f"{BOARD_SIZE}, {BOARD_SIZE}"], Int8]
+Move = tuple[Coords, Coords] | tuple[Coords, Coords, int]
+Evaluator = Callable[[list[float]], list[float]]

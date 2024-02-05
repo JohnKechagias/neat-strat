@@ -1,54 +1,79 @@
 import multiprocessing
 import pickle
+from functools import partial
 from pathlib import Path
+from typing import Literal
 
 import neat
-import visualize
+import numpy as np
+from neat.ctrnn import CTRNN
+from neat.genome import DefaultGenome, DefaultGenomeConfig
+from neat.math_util import mean
 
-runs_per_net = 5
-simulation_seconds = 60.0
-time_const = 0.01
+from constants import GameState, State
+from network.evaluator import play
+from network.parallel_evaluator import ConcurrentEvaluator
+from network.population import Population
+
+from . import visualize
+
+TIME_CONST = 0.01
 
 
-def eval_genome(genome, config):
-    net = neat.ctrnn.CTRNN.create(genome, config, time_const)
+def eval_genome(
+    genome: DefaultGenome,
+    config: DefaultGenomeConfig,
+    genome_opponents: list[DefaultGenome],
+) -> float:
+    opponents = [
+        partial(
+            CTRNN.create(g, config, TIME_CONST).advance,
+            advance_time=TIME_CONST,
+            time_step=TIME_CONST,
+        )
+        for g in genome_opponents
+    ]
+
+    network = neat.ctrnn.CTRNN.create(genome, config, TIME_CONST)
+    player = partial(network.advance, advance_time=TIME_CONST, time_step=TIME_CONST)
 
     fitnesses = []
-    for _ in range(runs_per_net):
-        sim = cart_pole.CartPole()
-        net.reset()
-
-        # Run the given simulation for up to num_steps time steps.
-        fitness = 0.0
-        while sim.t < simulation_seconds:
-            inputs = sim.get_scaled_state()
-            action = net.advance(inputs, time_const, time_const)
-
-            # Apply action to the simulated cart-pole
-            force = cart_pole.discrete_actuator_force(action)
-            sim.step(force)
-
-            # Stop if the network fails to keep the cart within the position or angle limits.
-            # The per-run fitness is the number of time steps the network can balance the pole
-            # without exceeding these limits.
-            if (
-                abs(sim.x) >= sim.position_limit
-                or abs(sim.theta) >= sim.angle_limit_radians
-            ):
-                break
-
-            fitness = sim.t
-
+    max_total_moves = 50
+    for opponent in opponents:
+        game_state, state, moves_record = play(player, opponent, max_total_moves)
+        fitness = get_fitness(game_state, state, moves_record)
         fitnesses.append(fitness)
 
-        # print("{0} fitness {1}".format(net, fitness))
-
     # The genome's fitness is its worst performance across all runs.
-    return min(fitnesses)
+    return mean(fitnesses)
+
+
+def get_fitness(
+    game_state: GameState,
+    board_state: State,
+    moves_record: list[tuple[Literal[0, 1], tuple]],
+) -> float:
+    max_fitness = 60.0
+    max_rounds = 50
+    rounds = len(moves_record)
+    players_population = int(np.sum(board_state))
+
+    fitness = 0
+    if game_state == GameState.ONGOING:
+        if players_population > 0:
+            fitness = min(players_population * 0.2, max_fitness * 3 / 4)
+    elif game_state == GameState.WIN:
+        print("ITS A WIN")
+        fitness = (max_rounds - rounds) * 0.2
+    elif game_state == GameState.LOSS:
+        print("ITS A LOSS")
+        fitness = min(rounds * 0.01, 20)
+
+    return fitness
 
 
 def run():
-    local_path = Path(__file__)
+    local_path = Path(__file__).parent
     config_path = local_path / "config.ini"
 
     config = neat.Config(
@@ -59,13 +84,13 @@ def run():
         config_path,
     )
 
-    pop = neat.Population(config)
+    pop = Population(config)
     stats = neat.StatisticsReporter()
     pop.add_reporter(stats)
     pop.add_reporter(neat.StdOutReporter(True))
 
-    evaluator = neat.ParallelEvaluator(multiprocessing.cpu_count(), eval_genome)
-    winner = pop.run(evaluator.evaluate)
+    evaluator = ConcurrentEvaluator(multiprocessing.cpu_count(), eval_genome)
+    winner = pop.run(evaluator.evaluate, n=50)
 
     with open("winner", "wb") as f:
         pickle.dump(winner, f)
@@ -79,7 +104,11 @@ def run():
     visualize.draw_net(config, winner, True, node_names=node_names)
 
     visualize.draw_net(
-        config, winner, view=True, node_names=node_names, filename="winner.gv"
+        config,
+        winner,
+        view=True,
+        node_names=node_names,
+        filename="winner.gv",
     )
     visualize.draw_net(
         config,

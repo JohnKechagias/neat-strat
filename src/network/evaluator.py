@@ -1,11 +1,11 @@
 import math
-from typing import Callable, Literal
+from typing import Literal
 
 import numpy as np
 from beartype import beartype
 from nptyping import Int8
 
-from constants import BOARD_SIZE, MAX_TROOPS, Coords, State
+from constants import BOARD_SIZE, MAX_TROOPS, Coords, Evaluator, GameState, Move, State
 
 neighbors_mappers: dict[Coords, list[Coords]] = {
     (0, 0): [(1, 0), (0, 1)],
@@ -103,7 +103,7 @@ def get_possible_moves(state: State) -> dict[tuple, State]:
             troops_to_move = min(troops_capacity, new_state[index])
             new_state[index] -= troops_to_move
             new_state[neighbor] += troops_to_move
-            moves[(tuple(index), neighbor, troops_to_move)] = new_state
+            moves[(Coords(index), neighbor, troops_to_move)] = new_state
 
     return moves
 
@@ -122,7 +122,7 @@ def get_possible_states(state: State) -> list[State]:
 
 def min_max(
     state: State,
-    evaluator: Callable[[State], float],
+    evaluator: Evaluator,
     depth: int,
     maximizes_player: bool,
     alpha: float,
@@ -130,7 +130,7 @@ def min_max(
     max_depth: int,
 ) -> float:
     if depth == max_depth:
-        return evaluator(state)
+        return sum(evaluator(list(state.flatten())))
 
     if maximizes_player:
         best_value = -math.inf
@@ -156,24 +156,96 @@ def min_max(
         return best_value
 
 
-def select_best_move(state: State, evaluator: Callable[[State], float], depth: int):
+def select_best_move(
+    state: State, evaluator: Evaluator, depth: int
+) -> tuple[tuple, State]:
     possible_moves = get_possible_moves(state)
 
     best_move = None
+    best_state = None
     best_value = -math.inf
+    values = []
     for move, p_state in possible_moves.items():
         value = min_max(p_state, evaluator, 0, False, -math.inf, math.inf, depth)
-
+        values.append(value)
         if value > best_value:
             best_move = move
             best_value = value
+            best_state = p_state
 
-    return best_move
+    # if best_move is None or best_state is None:
+    #     print(f"Number of available moves: {len(possible_moves)}")
+    #     print(f"Best move: {best_move}")
+    #     print(f"Best state: {best_state}")
+    #     print(f"Best value: {best_value}")
+    #     print(f"State: {state}")
+    #     print(f"Moves: {possible_moves.keys()}")
+    #     print(f"States: {possible_moves.values()}")
+    #     print(f"Values: {values}")
+
+    # If the network detects a lossing position the produces value could be -inf.
+    # This result in it not picking a move. To avoid that force it to play a move.
+    if best_move is None or best_state is None:
+        best_move, best_state = list(possible_moves.items())[0]
+
+    assert best_move is not None
+    assert best_state is not None
+    return best_move, best_state
+
+
+def play_move(state: State, move: Move) -> State:
+    # If its a production move.
+    if len(move) == 2:
+        state[move[0][0]][move[0][1]] += 1
+    # If its a reposition move.
+    elif len(move) == 3:
+        state[move[0][0]][move[0][1]] -= move[2]
+        state[move[1][0]][move[1][1]] += move[2]
+
+    return state
+
+
+def play(
+    player: Evaluator, opponent: Evaluator, rounds: int
+) -> tuple[GameState, State, list[tuple[Literal[0, 1], Move]]]:
+    depth = 3
+    state = np.zeros((5, 5), dtype=Int8)
+    state[0][4] = -10
+    state[4][0] = 10
+
+    game_record = []
+    for round in range(rounds):
+        if round % 2 == 0:
+            move, state = select_best_move(state, player, depth)
+            game_record.append((0, move))
+        else:
+            move, state = select_best_move(state * -1, opponent, depth)
+            state *= -1
+            game_record.append((1, move))
+
+        game_state = get_game_state(state)
+
+        if game_state != GameState.ONGOING:
+            return game_state, state, game_record
+
+    return GameState.DRAW, state, game_record
+
+
+def get_game_state(state: State) -> GameState:
+    flattened_state = state.flatten()
+    if np.all(flattened_state <= 0):
+        return GameState.LOSS
+    elif np.all(flattened_state >= 0):
+        return GameState.WIN
+    elif np.all(flattened_state == 0):
+        return GameState.DRAW
+    else:
+        return GameState.ONGOING
 
 
 def test_select_best_move():
-    def activate(var: State) -> float:
-        return var[0][3]
+    def activate(var: list[float]) -> list[float]:
+        return [var[3]]
 
     state = np.asarray(
         [

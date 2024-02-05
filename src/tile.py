@@ -94,7 +94,6 @@ class Tile:
         # Offset each hex (in the x axis) every 2nd row
         # to the positive side by half its width.
         x_offset = 0 if not y % 2 else X_OFFSET
-
         x_coord = int(x * X_STEP + x_offset + HEX_RADIUS + BOARD_PADDING)
         y_coord = int(y * Y_STEP + HEX_RADIUS + BOARD_PADDING)
         return (x_coord, y_coord)
