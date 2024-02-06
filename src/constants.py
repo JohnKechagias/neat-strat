@@ -1,11 +1,10 @@
 import math
 from enum import IntEnum
-from typing import Callable
 
 import arcade.color as colors
-import nptyping
 from arcade.types import Color
-from nptyping import Int8, NDArray
+from beartype.typing import Callable
+from nptyping import Int, NDArray, Shape
 
 
 class Player(IntEnum):
@@ -85,6 +84,6 @@ R_1 = BOARD_PADDING + HEX_S_RADIUS - HEX_RADIUS
 # Type definitions
 Coords = tuple[int, int]
 Point = tuple[float, float]
-State = NDArray[nptyping.Shape[f"{BOARD_SIZE}, {BOARD_SIZE}"], Int8]
+State = NDArray[Shape[f"{BOARD_SIZE}, {BOARD_SIZE}"], Int]
 Move = tuple[Coords, Coords] | tuple[Coords, Coords, int]
-Evaluator = Callable[[list[float]], list[float]]
+Evaluator = Callable[[NDArray], list[float]]

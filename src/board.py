@@ -128,7 +128,6 @@ class Board(arcade.Window):
             text.draw()
 
         self.draw_time = timeit.default_timer() - draw_start_time
-        # print(f'{self.draw_time:.4f}')
 
     def on_mouse_motion(self, x: int, y: int, dx: int, dy: int):
         new_curr_tile = self.get_tile_index_from_data_coords(x, y)

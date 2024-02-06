@@ -1,2 +1,2 @@
 # NeatStrat
-An application of the NEAT ML algorithm.
+An application of the NEAT algorithm.

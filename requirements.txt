@@ -1,8 +1,10 @@
 numpy
+pytest
+black
+isort
 nptyping
 beartype
 graphviz
 matplotlib
-neat-python
 arcade @ git+https://github.com/pythonarcade/arcade.git@development
 neat-proc @ git+https://github.com/JohnKechagias/neat-proc.git@main

@@ -3,9 +3,16 @@ from typing import Literal
 
 import numpy as np
 from beartype import beartype
-from nptyping import Int8
 
-from constants import BOARD_SIZE, MAX_TROOPS, Coords, Evaluator, GameState, Move, State
+from ..constants import (
+    BOARD_SIZE,
+    MAX_TROOPS,
+    Coords,
+    Evaluator,
+    GameState,
+    Move,
+    State,
+)
 
 neighbors_mappers: dict[Coords, list[Coords]] = {
     (0, 0): [(1, 0), (0, 1)],
@@ -36,10 +43,6 @@ neighbors_mappers: dict[Coords, list[Coords]] = {
 }
 
 
-def get_random_state() -> State:
-    return np.random.randint(-20, 20, size=(BOARD_SIZE, BOARD_SIZE), dtype=np.int8)
-
-
 def get_neighbors(x: int, y: int) -> list[Coords]:
     neighbors = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
 
@@ -61,7 +64,6 @@ def lookup_neighbors(x: int, y: int) -> list[Coords]:
     return neighbors_mappers[(x, y)]
 
 
-@beartype
 def get_children(state: State, player: Literal[-1, 1]) -> list[State]:
     children: list[State] = []
 
@@ -95,7 +97,7 @@ def get_possible_moves(state: State) -> dict[tuple, State]:
         if value < MAX_TROOPS:
             new_state = state.copy()
             new_state[index] = min(value + 1, MAX_TROOPS)
-            moves[(tuple(index), tuple(index))] = new_state
+            moves[(Coords(index), Coords(index))] = new_state
 
         for neighbor in lookup_neighbors(*index):
             new_state = state.copy()
@@ -108,7 +110,6 @@ def get_possible_moves(state: State) -> dict[tuple, State]:
     return moves
 
 
-@beartype
 def get_possible_states(state: State) -> list[State]:
     states_after_first_move = get_children(state, 1)
 
@@ -120,8 +121,9 @@ def get_possible_states(state: State) -> list[State]:
     return states_after_opposing_player_responds
 
 
+@beartype
 def min_max(
-    state: State,
+    state,
     evaluator: Evaluator,
     depth: int,
     maximizes_player: bool,
@@ -130,7 +132,7 @@ def min_max(
     max_depth: int,
 ) -> float:
     if depth == max_depth:
-        return sum(evaluator(list(state.flatten())))
+        return float(sum(evaluator(state.flatten())))
 
     if maximizes_player:
         best_value = -math.inf
@@ -157,14 +159,16 @@ def min_max(
 
 
 def select_best_move(
-    state: State, evaluator: Evaluator, depth: int
+    state: State,
+    evaluator: Evaluator,
+    depth: int,
 ) -> tuple[tuple, State]:
     possible_moves = get_possible_moves(state)
 
     best_move = None
     best_state = None
     best_value = -math.inf
-    values = []
+    values: list[float] = []
     for move, p_state in possible_moves.items():
         value = min_max(p_state, evaluator, 0, False, -math.inf, math.inf, depth)
         values.append(value)
@@ -209,7 +213,7 @@ def play(
     player: Evaluator, opponent: Evaluator, rounds: int
 ) -> tuple[GameState, State, list[tuple[Literal[0, 1], Move]]]:
     depth = 3
-    state = np.zeros((5, 5), dtype=Int8)
+    state = np.zeros((5, 5), dtype=np.int8)
     state[0][4] = -10
     state[4][0] = 10
 
@@ -241,22 +245,3 @@ def get_game_state(state: State) -> GameState:
         return GameState.DRAW
     else:
         return GameState.ONGOING
-
-
-def test_select_best_move():
-    def activate(var: list[float]) -> list[float]:
-        return [var[3]]
-
-    state = np.asarray(
-        [
-            [16, 0, -15, 14, -3],
-            [6, -8, 6, -19, -13],
-            [-1, 7, 13, 6, -12],
-            [5, -13, -5, -15, 7],
-            [-5, 15, 11, 17, -17],
-        ],
-        dtype=Int8,
-    )
-
-    best_move = select_best_move(state, activate, 3)
-    assert best_move == ((0, 3), (1, 3), 14)
