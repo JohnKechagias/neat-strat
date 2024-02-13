@@ -9,8 +9,8 @@ from nptyping import Int, NDArray, Shape
 
 class Player(IntEnum):
     NATURE = 0
-    PLAYER1 = 1
-    PLAYER2 = 2
+    RED = -1
+    BLUE = 1
 
 
 class Action(IntEnum):
@@ -18,7 +18,7 @@ class Action(IntEnum):
     PRODUCE = 1
 
 
-class GameState(IntEnum):
+class EndgameState(IntEnum):
     LOSS = -1
     DRAW = 0
     WIN = 1
@@ -27,8 +27,8 @@ class GameState(IntEnum):
 
 PLAYER_COLOR: dict[Player, Color] = {
     Player.NATURE: colors.LIGHT_GRAY,
-    Player.PLAYER1: colors.RED_VIOLET,
-    Player.PLAYER2: colors.EMERALD,
+    Player.RED: colors.RED_VIOLET,
+    Player.BLUE: colors.EMERALD,
 }
 
 
@@ -55,7 +55,7 @@ MENU_WIDTH = 600
 COLOR_THEME = Theme.DARK
 # Title of the window
 TITLE = "Sreak"
-MAX_TROOPS = 20
+MAX_TROOPS = 10
 
 
 # Half the radius of a hex
@@ -84,6 +84,7 @@ R_1 = BOARD_PADDING + HEX_S_RADIUS - HEX_RADIUS
 # Type definitions
 Coords = tuple[int, int]
 Point = tuple[float, float]
-State = NDArray[Shape[f"{BOARD_SIZE}, {BOARD_SIZE}"], Int]
+Board = NDArray[Shape[f"{BOARD_SIZE}, {BOARD_SIZE}"], Int]
 Move = tuple[Coords, Coords] | tuple[Coords, Coords, int]
+MovesRecord = list[Move]
 Evaluator = Callable[[NDArray], list[float]]

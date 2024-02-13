@@ -3,11 +3,11 @@ from itertools import product
 from typing import Optional
 
 import arcade
-
-from constants import *
 from menu import Menu
 from parameters import Params
 from tile import Tile
+
+from constants import *
 
 
 class Board(arcade.Window):
@@ -27,7 +27,7 @@ class Board(arcade.Window):
     def setup(self):
         self.round = 1
         self.start_tile_index: Optional[int] = None
-        self.curr_player = Player.PLAYER1
+        self.curr_player = Player.RED
         self.action = Action.MOVE
         self.origin_tile_coords = (0, 0)
         self.destination_tile_coords = (0, 0)
@@ -81,9 +81,9 @@ class Board(arcade.Window):
         # Initialize the starting tile for each player.
         player_1_starting_tile = 0
         player_2_starting_tile = len(self.tiles) - 1
-        self.tiles[player_1_starting_tile].owner = Player.PLAYER1
+        self.tiles[player_1_starting_tile].owner = Player.RED
         self.tiles[player_1_starting_tile].troops = 10
-        self.tiles[player_2_starting_tile].owner = Player.PLAYER2
+        self.tiles[player_2_starting_tile].owner = Player.BLUE
         self.tiles[player_2_starting_tile].troops = 10
 
         # Add the starting tiles to the rendering list.
@@ -93,10 +93,10 @@ class Board(arcade.Window):
     def end_round(self):
         self.round += 1
 
-        if self.curr_player == Player.PLAYER1:
-            self.curr_player = Player.PLAYER2
+        if self.curr_player == Player.RED:
+            self.curr_player = Player.BLUE
         else:
-            self.curr_player = Player.PLAYER1
+            self.curr_player = Player.RED
 
         # Start tile needs to be reset so that the next player
         # can't use the starting tile of the previous player.

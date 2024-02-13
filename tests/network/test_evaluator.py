@@ -1,10 +1,19 @@
+import time
+
 import numpy as np
 
-from src.constants import BOARD_SIZE, State
-from src.network.evaluator import select_best_move
+from src.constants import BOARD_SIZE, MAX_TROOPS, Board
+from src.network.evaluator import (
+    compute_state_hash,
+    get_default_state,
+    get_piece_index,
+    get_possible_moves,
+    initialize_zobri_table,
+    select_best_move,
+)
 
 
-def get_random_state() -> State:
+def get_random_state() -> Board:
     return np.random.randint(-20, 20, size=(BOARD_SIZE, BOARD_SIZE), dtype=np.int8)
 
 
@@ -25,3 +34,21 @@ def test_select_best_move():
 
     best_move, _ = select_best_move(state, activate, 3)
     assert best_move == ((0, 3), (1, 3), 14)
+
+
+def test_zobrist_hash():
+    table = initialize_zobri_table()
+    state = get_default_state()
+    hash = compute_state_hash(state, table)
+    print(hash)
+
+
+def test_get_piece_index():
+    indexes = set()
+    for value in range(-MAX_TROOPS, MAX_TROOPS + 1):
+        if value == 0:
+            continue
+
+        index = get_piece_index(value)
+        assert index not in indexes
+        indexes.add(index)
