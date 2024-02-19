@@ -16,7 +16,7 @@ class NodeFlag(IntEnum):
 class TranspositionEntry:
     key: int
     score: float
-    best_move: Move
+    best_move: Optional[Move]
     depth: int
     flag: NodeFlag
 
@@ -31,7 +31,14 @@ class TranspositionTable:
             None for _ in range(num_of_entries)
         ]
 
-    def add(self, key: int, value: float, best_move: Move, depth: int, flag: NodeFlag):
+    def add(
+        self,
+        key: int,
+        value: float,
+        best_move: Optional[Move],
+        depth: int,
+        flag: NodeFlag,
+    ):
         entry = TranspositionEntry(key, value, best_move, depth, flag)
         index = self._get_index_from_zobri_key(entry.key)
         self.table.insert(index, entry)

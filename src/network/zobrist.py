@@ -18,7 +18,7 @@ def get_piece_index(piece: int) -> int:
     if piece > 0:
         return piece - 1
 
-    return -1 * piece + MAX_TROOPS - 1
+    return piece
 
 
 TABLE = initialize_zobri_table()
@@ -37,3 +37,7 @@ def compute_zobri_hash(board: Board, player_to_move: Player) -> int:
         h ^= SIDE_TO_MOVE
 
     return h
+
+
+def get_hash(x: int, y: int, troops: int) -> int:
+    return TABLE[x][y][get_piece_index(troops)]

@@ -1,6 +1,6 @@
 from enum import IntEnum
+from typing import Callable
 
-from beartype.typing import Callable
 from nptyping import Int, NDArray, Shape
 
 
@@ -10,13 +10,13 @@ class Player(IntEnum):
 
 
 class EndgameState(IntEnum):
-    LOSS = -1
+    RED_WON = -1
     DRAW = 0
-    WIN = 1
+    BLUE_WON = 1
     ONGOING = 2
 
 
-# Board is square shaped so, size = 6 corresponds to a 6x6 board
+# Board is square shaped so, size = 5 corresponds to a 5x5 board
 BOARD_SIZE = 5
 MAX_TROOPS = 10
 

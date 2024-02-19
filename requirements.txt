@@ -4,7 +4,5 @@ black
 isort
 nptyping
 beartype
-graphviz
-matplotlib
 arcade @ git+https://github.com/pythonarcade/arcade.git@development
 neat-proc @ git+https://github.com/JohnKechagias/neat-proc.git@main

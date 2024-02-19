@@ -30,7 +30,7 @@ NEIGHBOURS_TABLE: list[list[Coords]] = [
 
 
 def get_coord_hash(x: int, y: int) -> int:
-    return x * 5 + y
+    return x * BOARD_SIZE + y
 
 
 def lookup_neighbours(x: int, y: int) -> list[Coords]:
