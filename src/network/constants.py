@@ -5,15 +5,16 @@ from nptyping import Int, NDArray, Shape
 
 
 class Player(IntEnum):
+    NATURE = 0
     RED = -1
     BLUE = 1
 
 
 class EndgameState(IntEnum):
-    RED_WON = -1
     DRAW = 0
-    BLUE_WON = 1
-    ONGOING = 2
+    RED_WON = 1
+    BLUE_WON = 2
+    ONGOING = 3
 
 
 # Board is square shaped so, size = 5 corresponds to a 5x5 board

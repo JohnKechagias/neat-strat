@@ -18,6 +18,13 @@ from .neighbours_table import lookup_neighbours
 from .transposition_table import NodeFlag, TranspositionTable, evaluate_entry
 from .zobrist import compute_zobri_hash
 
+STORAGE_SIZE_MB = 1024
+SINGULAR_MOVE_MARGIN = 1.0
+SINGULAR_EXTENSION_DEPTH_LIMIT = 3
+SINGULAR_MOVE_EXTENSION = 1
+MAX_DEPTH = 10
+IID_DEPTH_LIMIT = 4
+
 
 def get_default_board() -> Board:
     board = np.zeros((5, 5), dtype=np.int8)
@@ -48,8 +55,7 @@ def get_endgame_state(state: Board) -> EndgameState:
         return EndgameState.BLUE_WON
     elif has_red_pieces and not has_blue_pieces:
         return EndgameState.RED_WON
-    else:
-        return EndgameState.DRAW
+    return EndgameState.DRAW
 
 
 def get_possible_moves(board: Board, player_to_move: Player) -> list[Move]:
@@ -71,7 +77,7 @@ def get_possible_moves(board: Board, player_to_move: Player) -> list[Move]:
 
             troops = temp_board[index]
             troops_transfers_to_consider = [troops, 1]
-            if troops > 3:
+            if troops > 2:
                 troops_transfers_to_consider.append(troops - 1)
 
             for troops_to_transfer in troops_transfers_to_consider:
@@ -102,14 +108,6 @@ def order_moves(moves: list[Move], player_to_move: Player) -> list[Move]:
     return [x for _, x in sorted(zip(scores, moves), reverse=True)]
 
 
-storage = TranspositionTable(1024)
-SINGULAR_MOVE_MARGIN = 1.0
-SINGULAR_EXTENSION_DEPTH_LIMIT = 3
-SINGULAR_MOVE_EXTENSION = 1
-MAX_DEPTH = 10
-IID_DEPTH_LIMIT = 4
-
-
 class PVLine:
     def __init__(self):
         self.moves: list[Move] = []
@@ -134,12 +132,18 @@ def format_board_for_evaluation(board: Board, side: Player) -> NDArray:
 
 
 class Searcher:
-    def __init__(self):
+    def __init__(self, storage_size_MB: int, depth: int):
+        self.depth = depth
         self.pvline = PVLine()
         self.best_move: Optional[Move] = None
+        self.storage = TranspositionTable(storage_size_MB)
 
-    def search(self, evaluator: Evaluator, state: GameState, depth: int) -> Move:
+    def reset(self):
+        self.storage.clear()
+
+    def search(self, evaluator: Evaluator, state: GameState) -> Move:
         pvline = PVLine()
+        depth = self.depth
         self.pvs(evaluator, state, depth, 0, -math.inf, math.inf, pvline, None, False)
         return pvline.get_pv_move()
 
@@ -170,7 +174,7 @@ class Searcher:
         # a hit, return the score and stop searching.                          #
         # =====================================================================#
 
-        entry = storage.get(state.hash)
+        entry = self.storage.get(state.hash)
         tt_score, tt_can_be_used, tt_move = evaluate_entry(entry, depth, alpha, beta)
 
         if tt_can_be_used and not is_root and move_to_skip != tt_move:
@@ -342,7 +346,7 @@ class Searcher:
         ):
             raise RuntimeError(f"{state.player_to_move}: {self.best_move}")
 
-        storage.add(state.hash, beta, best_move, depth, node_type)
+        self.storage.add(state.hash, beta, best_move, depth, node_type)
         return best_score
 
 
@@ -352,14 +356,14 @@ def play(
     opponent_starts: bool,
     rounds: int,
     depth: int,
-) -> tuple[EndgameState, Board, MovesRecord]:
+) -> tuple[EndgameState, GameState]:
     game_state = get_default_state()
     evaluator = opponent if opponent_starts else player
     endgame_state = EndgameState.ONGOING
-    searcher = Searcher()
+    searcher = Searcher(STORAGE_SIZE_MB, depth)
 
     for _ in range(rounds):
-        move = searcher.search(evaluator, game_state, depth)
+        move = searcher.search(evaluator, game_state)
         make_move(game_state, move)
         endgame_state = get_endgame_state(game_state.board)
 
@@ -367,4 +371,4 @@ def play(
             break
 
         evaluator = player if evaluator != player else opponent
-    return endgame_state, game_state.board, game_state.history
+    return endgame_state, game_state

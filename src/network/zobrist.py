@@ -26,17 +26,17 @@ SIDE_TO_MOVE = get_random_int()
 
 
 def compute_zobri_hash(board: Board, player_to_move: Player) -> int:
-    h = 0
+    zhash = 0
     for i in range(BOARD_SIZE):
         for j in range(BOARD_SIZE):
             if board[i][j] != 0:
                 piece = get_piece_index(board[i][j])
-                h ^= TABLE[i][j][piece]
+                zhash ^= TABLE[i][j][piece]
 
     if player_to_move == Player.RED:
-        h ^= SIDE_TO_MOVE
+        zhash ^= SIDE_TO_MOVE
 
-    return h
+    return zhash
 
 
 def get_hash(x: int, y: int, troops: int) -> int:

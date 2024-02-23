@@ -1,17 +1,33 @@
+import time
 import timeit
 from itertools import product
 from typing import Optional
 
 import arcade
-from menu import Menu
-from parameters import Params
-from tile import Tile
+import numpy as np
 
-from constants import *
+from src.network.constants import Evaluator
+
+from .constants import *
+from .menu import Menu
+from .network.game_state import make_move
+from .network.search import EndgameState, Searcher, get_default_state, get_endgame_state
+from .parameters import Params
+from .tile import Tile
 
 
-class Board(arcade.Window):
-    def __init__(self, width: int, height: int, title: str, size: int, samples: int):
+class Game(arcade.Window):
+    def __init__(
+        self,
+        width: int,
+        height: int,
+        title: str,
+        size: int,
+        samples: int,
+        evaluator: Optional[Evaluator] = None,
+        player_starts: Optional[bool] = None,
+        model_plays_itself: Optional[bool] = None,
+    ):
         super().__init__(
             width=width,
             height=height,
@@ -21,17 +37,33 @@ class Board(arcade.Window):
         self.board_size = size
         self.background_color = colors.BLACK
         self.selected_tile_color = colors.GRAPE
-        self.max_troops = 20
-        self.setup()
+        self.evaluator = evaluator
+        self.player_starts = player_starts
+        self.model_plays_itself = model_plays_itself
+
+        if self.evaluator is not None:
+            self.searcher = Searcher(STORAGE_SIZE_MB, DEPTH)
 
     def setup(self):
+        if self.evaluator is not None:
+            self.searcher.reset()
+
         self.round = 1
+        self.state = get_default_state()
         self.start_tile_index: Optional[int] = None
-        self.curr_player = Player.RED
         self.action = Action.MOVE
+        self.player_move = ((0, 0), (0, 0))
         self.origin_tile_coords = (0, 0)
         self.destination_tile_coords = (0, 0)
 
+        # Helper variable that is used when a model plays with itself. Measures
+        # the time elapsed since the last time a move was mode. Used to play moves
+        # at intervals in order to have time to see what the model plays (else it
+        # whould go too fast to see).
+        self.timer: float = 0
+        # Interval between moves played by the model. Used when a model plays with
+        # itself.
+        self.interval = 0.05
         # The tile index that the mouse is hovering over.
         # If curr_tile is None, it means that the mouse isn't
         # currently hovering over a valid tile.
@@ -79,28 +111,33 @@ class Board(arcade.Window):
             self.text_objects.append(text)
 
         # Initialize the starting tile for each player.
-        player_1_starting_tile = 0
-        player_2_starting_tile = len(self.tiles) - 1
-        self.tiles[player_1_starting_tile].owner = Player.RED
-        self.tiles[player_1_starting_tile].troops = 10
-        self.tiles[player_2_starting_tile].owner = Player.BLUE
-        self.tiles[player_2_starting_tile].troops = 10
+        for coords, troops in np.ndenumerate(self.state.board):
+            tile_index = self.get_tile_index_from_grid_coords(*coords)
 
-        # Add the starting tiles to the rendering list.
-        self.tiles_to_render.append(player_1_starting_tile)
-        self.tiles_to_render.append(player_2_starting_tile)
+            if troops > 0:
+                tile_index = self.get_tile_index_from_grid_coords(*coords)
+                tile = self.tiles[tile_index]
+                tile.owner = Player.BLUE
+                tile.troops = int(troops)
+                self.tiles_to_render.append(tile_index)
+            elif troops < 0:
+                tile_index = self.get_tile_index_from_grid_coords(*coords)
+                tile = self.tiles[tile_index]
+                tile.owner = Player.RED
+                tile.troops = int(-troops)
+                self.tiles_to_render.append(tile_index)
 
-    def end_round(self):
-        self.round += 1
+        self.selected_troops: dict[Player, int] = {
+            Player.BLUE: 0,
+            Player.RED: 0,
+        }
 
-        if self.curr_player == Player.RED:
-            self.curr_player = Player.BLUE
-        else:
-            self.curr_player = Player.RED
+        if self.evaluator is None:
+            return
 
-        # Start tile needs to be reset so that the next player
-        # can't use the starting tile of the previous player.
-        self.start_tile_index = None
+        if not self.model_plays_itself and not self.player_starts:
+            move = self.searcher.search(self.evaluator, self.state)
+            self.make_move(move)
 
     def on_draw(self):
         draw_start_time = timeit.default_timer()
@@ -108,11 +145,10 @@ class Board(arcade.Window):
         self.clear()
         self.shapes_list.draw()
         self.menu.render(
-            self.curr_player.name,
+            self.state.player_to_move.name,
             self.action,
+            self.player_move,
             self.round,
-            self.origin_tile_coords,
-            self.destination_tile_coords,
         )
 
         for coords in self.tiles_to_render:
@@ -129,42 +165,115 @@ class Board(arcade.Window):
 
         self.draw_time = timeit.default_timer() - draw_start_time
 
+    def on_update(self, delta_time: float):
+        if not self.model_plays_itself or self.evaluator is None:
+            return
+
+        if time.time() - self.timer < self.interval:
+            return
+
+        move = self.searcher.search(self.evaluator, self.state)
+        self.make_move(move)
+        self.timer = time.time()
+
     def on_mouse_motion(self, x: int, y: int, dx: int, dy: int):
+        if self.model_plays_itself:
+            return
+
         new_curr_tile = self.get_tile_index_from_data_coords(x, y)
 
         if self.curr_tile_index != new_curr_tile:
             self.curr_tile_index = new_curr_tile
+
+            if coords := self.get_tile_coords_from_data_coords(x, y):
+                self.curr_tile_coords = coords
+
             self.tiles_to_highlight.clear()
 
             if new_curr_tile is not None:
                 tile = self.tiles[new_curr_tile]
-                self.tiles_to_highlight.extend(tile.neighbors)
+                self.tiles_to_highlight.extend(tile.neighbours)
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int):
+        if self.model_plays_itself:
+            return
+
         # Only continue if the mouse pressed a tile.
         if self.curr_tile_index is None:
             return
 
         tile = self.tiles[self.curr_tile_index]
-
         match button:
-            case 1:
+            case arcade.MOUSE_BUTTON_LEFT:
                 # Player is only allowed to select his own tiles.
-                if tile.owner == self.curr_player:
+                if tile.owner == self.state.player_to_move:
+                    self.reset_selected_troops()
                     self.start_tile_index = self.curr_tile_index
-            case 4:
+                    self.start_tile_coords = self.curr_tile_coords
+            case arcade.MOUSE_BUTTON_RIGHT:
                 # If the starting and the current tiles are valid tiles and the
                 # current tile is a valid neighbour of the starting tile and the
                 # starting tile isn't the same as the current tile, allow the move
                 # action.
                 if self.start_tile_index is not None:
-                    if (
-                        self.curr_tile_index
-                        in self.tiles[self.start_tile_index].neighbors
+                    start_tile = self.tiles[self.start_tile_index]
+                    neighbours = start_tile.neighbours
+                    if self.curr_tile_index in neighbours:
+                        player_to_move = self.state.player_to_move
+                        troops = self.selected_troops[player_to_move] * player_to_move
+                        move = (self.start_tile_coords, self.curr_tile_coords, troops)
+                        self.make_move(move)
+
+                        if self.evaluator is not None:
+                            move = self.searcher.search(self.evaluator, self.state)
+                            self.make_move(move)
+                    elif (
+                        self.curr_tile_index == self.start_tile_index
+                        and start_tile.troops < MAX_TROOPS
                     ):
-                        self.move(self.start_tile_index, self.curr_tile_index, 2)
-                    elif self.curr_tile_index == self.start_tile_index:
-                        self.produce(self.curr_tile_index)
+                        self.make_move((self.start_tile_coords, self.curr_tile_coords))
+
+                        if self.evaluator is not None:
+                            move = self.searcher.search(self.evaluator, self.state)
+                            self.make_move(move)
+
+    def on_mouse_scroll(self, x: int, y: int, scroll_x: int, scroll_y: int):
+        if self.model_plays_itself:
+            return
+
+        if self.start_tile_index is None:
+            return
+
+        if scroll_y > 0:
+            start_tile = self.tiles[self.start_tile_index]
+            if self.selected_troops[self.state.player_to_move] < start_tile.troops:
+                self.selected_troops[self.state.player_to_move] += 1
+        elif scroll_y < 0:
+            if self.selected_troops[self.state.player_to_move] > 1:
+                self.selected_troops[self.state.player_to_move] -= 1
+
+    def make_move(self, move: Move):
+        self.player_move = move
+
+        start_index = self.get_tile_index_from_grid_coords(move[0][0], move[0][1])
+        if len(move) == 2:
+            self.produce(start_index)
+        elif len(move) == 3:
+            end_index = self.get_tile_index_from_grid_coords(move[1][0], move[1][1])
+            self.move(start_index, end_index, move[2] * self.state.player_to_move)
+
+        make_move(self.state, move)
+        endgame_state = get_endgame_state(self.state.board)
+        if endgame_state != EndgameState.ONGOING:
+            self.setup()
+
+        self.end_round()
+
+    def end_round(self):
+        self.round += 1
+        # Start tile needs to be reset so that the next player
+        # can't use the starting tile of the previous player.
+        self.start_tile_index = None
 
     def move(self, start: int, end: int, troops: int):
         start_tile = self.tiles[start]
@@ -189,15 +298,13 @@ class Board(arcade.Window):
         self.action = Action.MOVE
         self.origin_tile_coords = start_tile.coords
         self.destination_tile_coords = end_tile.coords
-        self.end_round()
 
     def produce(self, tile_index: int):
         tile = self.tiles[tile_index]
-        tile.troops = min(tile.troops + 1, self.max_troops)
+        tile.troops = min(tile.troops + 1, MAX_TROOPS)
         self.action = Action.PRODUCE
         self.origin_tile_coords = tile.coords
         self.destination_tile_coords = tile.coords
-        self.end_round()
 
     def get_tile_from_coords(self, x: int, y: int) -> Tile:
         return self.tiles[self.get_tile_index_from_grid_coords(x, y)]
@@ -222,17 +329,5 @@ class Board(arcade.Window):
     def are_grid_coords_valid(self, x: int, y: int) -> bool:
         return x >= 0 and x < BOARD_SIZE and y >= 0 and y < BOARD_SIZE
 
-
-def main():
-    board = Board(
-        Params.board_width,
-        Params.board_height,
-        Params.board_title,
-        Params.board_size,
-        16,
-    )
-    board.run()
-
-
-if __name__ == "__main__":
-    main()
+    def reset_selected_troops(self):
+        self.selected_troops[self.state.player_to_move] = 1

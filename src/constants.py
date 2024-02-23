@@ -3,26 +3,16 @@ from enum import IntEnum
 
 import arcade.color as colors
 from arcade.types import Color
-from beartype.typing import Callable
-from nptyping import Int, NDArray, Shape
 
+from .network.constants import Player
 
-class Player(IntEnum):
-    NATURE = 0
-    RED = -1
-    BLUE = 1
+STORAGE_SIZE_MB = 1024
+DEPTH = 3
 
 
 class Action(IntEnum):
     MOVE = 0
     PRODUCE = 1
-
-
-class EndgameState(IntEnum):
-    LOSS = -1
-    DRAW = 0
-    WIN = 1
-    ONGOING = 2
 
 
 PLAYER_COLOR: dict[Player, Color] = {
@@ -84,7 +74,4 @@ R_1 = BOARD_PADDING + HEX_S_RADIUS - HEX_RADIUS
 # Type definitions
 Coords = tuple[int, int]
 Point = tuple[float, float]
-Board = NDArray[Shape[f"{BOARD_SIZE}, {BOARD_SIZE}"], Int]
 Move = tuple[Coords, Coords] | tuple[Coords, Coords, int]
-MovesRecord = list[Move]
-Evaluator = Callable[[NDArray], list[float]]

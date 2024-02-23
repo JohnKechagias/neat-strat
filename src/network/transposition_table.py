@@ -22,13 +22,13 @@ class TranspositionEntry:
 
 
 class TranspositionTable:
-    def __init__(self, sizeMB: int):
+    def __init__(self, size_MB: int):
         size_of_entry = sys.getsizeof(TranspositionEntry)
-        desired_table_size_in_bytes = sizeMB * 1024 * 1024
+        desired_table_size_in_bytes = size_MB * 1024 * 1024
         num_of_entries = desired_table_size_in_bytes // size_of_entry
         self.max_entries_count = num_of_entries
         self.table: list[Optional[TranspositionEntry]] = [
-            None for _ in range(num_of_entries)
+            None for _ in range(self.max_entries_count)
         ]
 
     def add(
@@ -53,7 +53,7 @@ class TranspositionTable:
         return entry
 
     def clear(self):
-        self.table.clear()
+        self.table = [None for _ in range(self.max_entries_count)]
 
     def _get_index_from_zobri_key(self, zobri_key: int):
         return zobri_key % self.max_entries_count

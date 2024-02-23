@@ -2,7 +2,7 @@ import arcade
 from arcade.shape_list import Shape, create_rectangle_outline
 from arcade.types import Color
 
-from constants import *
+from .constants import MENU_WIDTH, Action, Move, Point, colors
 
 
 class Menu:
@@ -28,7 +28,7 @@ class Menu:
 
         self.round_text = arcade.Text(
             text="",
-            start_x=int(self.point[0] - 0.3 * MENU_WIDTH),
+            start_x=int(self.point[0] - 0.4 * MENU_WIDTH),
             start_y=int(self.point[1]),
             color=self.label_color,
             font_size=self.label_font_size,
@@ -37,7 +37,7 @@ class Menu:
 
         self.action_text = arcade.Text(
             text="",
-            start_x=int(self.point[0] - 0.0 * MENU_WIDTH),
+            start_x=int(self.point[0] - 0.1 * MENU_WIDTH),
             start_y=int(self.point[1]),
             color=self.label_color,
             font_size=self.label_font_size,
@@ -54,13 +54,18 @@ class Menu:
         self,
         player_name: str,
         action: Action,
+        move: Move,
         round: int,
-        start: Coords,
-        end: Coords,
     ):
         self.curr_player_text.text = player_name
         self.curr_player_text.draw()
         self.round_text.text = f"Round {round}"
         self.round_text.draw()
-        self.action_text.text = f"{action.name} {start} -> {end}"
+
+        action_text = f"{action.name} {move[0]} -> {move[1]}"
+
+        if len(move) == 3:
+            action_text += f" ({abs(move[2])})"
+
+        self.action_text.text = action_text
         self.action_text.draw()

@@ -10,10 +10,15 @@ class GameState:
     hash: int
     player_to_move: Player
     history: list[Move] = field(default_factory=list)
+    captures: dict[Player, int] = field(
+        default_factory=lambda: {
+            Player.RED: 0,
+            Player.BLUE: 0,
+        }
+    )
 
 
 def make_move(state: GameState, move: Move):
-    temp = state.board.copy()
     # If its a production move.
     if len(move) == 2:
         x, y = move[0]
@@ -47,22 +52,12 @@ def make_move(state: GameState, move: Move):
         if target_prev_value != 0:
             state.hash ^= zobrist.get_hash(target_x, target_y, target_prev_value)
 
+        if target_prev_value * troops < 0:
+            state.captures[state.player_to_move] += 1
+
         target_new_value = target_prev_value + troops
         state.board[target_x][target_y] = target_new_value
-        try:
-            state.hash ^= zobrist.get_hash(target_x, target_y, target_new_value)
-        except IndexError as e:
-            print("Before Move")
-            print(temp)
-            print("After Move")
-            print(state.board)
-            print(source_prev_value)
-            print(source_new_value)
-            print(target_prev_value)
-            print(target_new_value)
-            print(move)
-            print(state.history)
-            raise e
+        state.hash ^= zobrist.get_hash(target_x, target_y, target_new_value)
 
     state.history.append(move)
     switch_player_to_move(state)
@@ -70,6 +65,7 @@ def make_move(state: GameState, move: Move):
 
 def undo_move(state: GameState):
     move = state.history.pop()
+    switch_player_to_move(state)
 
     # If its a production move.
     if len(move) == 2:
@@ -104,11 +100,12 @@ def undo_move(state: GameState):
         state.hash ^= zobrist.get_hash(target_x, target_y, target_prev_value)
 
         target_new_value = target_prev_value - troops
+        if target_new_value * troops < 0:
+            state.captures[state.player_to_move] -= 1
+
         state.board[target_x][target_y] = target_new_value
         if target_new_value != 0:
             state.hash ^= zobrist.get_hash(target_x, target_y, target_new_value)
-
-    switch_player_to_move(state)
 
 
 def switch_player_to_move(state: GameState):

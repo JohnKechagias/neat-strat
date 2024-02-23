@@ -4,7 +4,7 @@ import arcade
 from arcade.shape_list import create_polygon
 from arcade.types import Color
 
-from constants import *
+from .constants import *
 
 
 class Tile:
@@ -32,7 +32,7 @@ class Tile:
         )
 
     @property
-    def neighbors(self) -> list[int]:
+    def neighbours(self) -> list[int]:
         return self._neighbors
 
     @property
