@@ -6,10 +6,9 @@ from typing import Optional
 import arcade
 import numpy as np
 
-from src.network.constants import Evaluator
-
 from .constants import *
 from .menu import Menu
+from .network.constants import Evaluator
 from .network.game_state import make_move
 from .network.search import EndgameState, Searcher, get_default_state, get_endgame_state
 from .parameters import Params

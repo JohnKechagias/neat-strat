@@ -4,15 +4,7 @@ from typing import Optional, Self
 import numpy as np
 from nptyping import NDArray
 
-from .constants import (
-    MAX_TROOPS,
-    Board,
-    Coords,
-    EndgameState,
-    Evaluator,
-    Move,
-    MovesRecord,
-)
+from .constants import MAX_TROOPS, Board, Coords, EndgameState, Evaluator, Move
 from .game_state import GameState, Player, make_move, undo_move
 from .neighbours_table import lookup_neighbours
 from .transposition_table import NodeFlag, TranspositionTable, evaluate_entry

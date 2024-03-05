@@ -8,20 +8,15 @@ from src.network.game_state import (
     switch_player_to_move,
     undo_move,
 )
-from src.network.search import (
-    Searcher,
-    get_default_state,
-    get_possible_moves,
-    select_best_move,
-)
+from src.network.search import Searcher, get_default_state, get_possible_moves
 from src.network.zobrist import compute_zobri_hash, get_hash, get_piece_index
 
 
 def a_test_select_best_move():
-    def activate(var: np.ndarray) -> list[float]:
+    def evaluator(var: np.ndarray) -> list[float]:
         return [float(var[3])]
 
-    searcher = Searcher()
+    searcher = Searcher(1024, 3)
     board = np.asarray(
         [
             [9, 0, -8, 10, -3],
@@ -33,7 +28,7 @@ def a_test_select_best_move():
         dtype=np.int8,
     )
     state = GameState(board, compute_zobri_hash(board, Player.BLUE), Player.BLUE)
-    best_move = select_best_move(searcher, state, activate, 3)
+    best_move = searcher.search(evaluator, state)
     assert best_move == ((0, 4), (0, 4))
 
 

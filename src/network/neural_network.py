@@ -8,6 +8,7 @@ from pathlib import Path
 import neat
 import numpy as np
 from neat import FeedForwardNetwork, Genome
+from neat.population import StatisticalData
 from neat.utils import mean
 
 from .constants import EndgameState, Player
@@ -71,7 +72,6 @@ def get_fitness(
     capture_bonus = 8.0
 
     fitness = 0.0
-
     player = Player.RED if opponent_started else Player.BLUE
     fitness += game_state.captures[player] * capture_bonus
 
@@ -118,7 +118,10 @@ def train(iterations: int) -> Genome:
         for fitness, genome in zip(fitnesses, genomes):
             genome.fitness = fitness
 
-    winner = population.run(evaluate, times=iterations)
+    winner, statistical_data = population.run(evaluate, times=iterations)
+
+    with open("stats.pkl", "rb") as f:
+        stats: StatisticalData = pickle.load(f)
 
     with open("winner", "wb") as f:
         pickle.dump(winner, f)

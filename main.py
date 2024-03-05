@@ -14,9 +14,9 @@ class GameVariation(StrEnum):
     PLAYER_VS_PLAYER = auto()
 
 
-TRAIN = False
-ITERATIONS = 5
-PLAY = True
+TRAIN = True
+ITERATIONS = 50
+PLAY = False
 PLAYER_STARTS = True
 GAME_VARIATION = GameVariation.MODEL_VS_MODEL
 
