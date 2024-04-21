@@ -32,7 +32,7 @@ def main():
     model_plays_itself = GAME_VARIATION == GameVariation.MODEL_VS_MODEL
     if GAME_VARIATION != GameVariation.PLAYER_VS_PLAYER:
         if genome is None:
-            with open("winner_gen_30_old", "rb") as f:
+            with open("winner", "rb") as f:
                 genome = pickle.load(f)
 
         evaluator = FeedForwardNetwork.from_genome(genome).activate

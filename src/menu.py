@@ -18,8 +18,8 @@ class Menu:
 
         self.curr_player_text = arcade.Text(
             text="",
-            start_x=int(self.point[0] - 0.6 * MENU_WIDTH),
-            start_y=int(self.point[1]),
+            x=int(self.point[0] - 0.6 * MENU_WIDTH),
+            y=int(self.point[1]),
             color=self.label_color,
             font_size=self.label_font_size,
             width=self.label_width,
@@ -28,8 +28,8 @@ class Menu:
 
         self.round_text = arcade.Text(
             text="",
-            start_x=int(self.point[0] - 0.4 * MENU_WIDTH),
-            start_y=int(self.point[1]),
+            x=int(self.point[0] - 0.4 * MENU_WIDTH),
+            y=int(self.point[1]),
             color=self.label_color,
             font_size=self.label_font_size,
             width=self.label_width,
@@ -37,8 +37,8 @@ class Menu:
 
         self.action_text = arcade.Text(
             text="",
-            start_x=int(self.point[0] - 0.1 * MENU_WIDTH),
-            start_y=int(self.point[1]),
+            x=int(self.point[0] - 0.1 * MENU_WIDTH),
+            y=int(self.point[1]),
             color=self.label_color,
             font_size=self.label_font_size,
             width=self.label_width,
