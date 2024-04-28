@@ -17,8 +17,8 @@ class Action(IntEnum):
 
 PLAYER_COLOR: dict[Player, Color] = {
     Player.NATURE: colors.LIGHT_GRAY,
-    Player.RED: colors.RED_VIOLET,
-    Player.BLUE: colors.EMERALD,
+    Player.RED: colors.BRICK_RED,
+    Player.BLUE: colors.BLEU_DE_FRANCE,
 }
 
 
@@ -32,7 +32,7 @@ BOARD_SIZE = 5
 # Radius of the circle outside of the hexagon
 HEX_RADIUS = 50
 # Padding between the hexagons
-HEX_PADDING = 10
+HEX_PADDING = 4
 # Padding between the board and the window
 BOARD_PADDING = 50
 # Padding between the menu and the window

@@ -32,10 +32,11 @@ class Game(arcade.Window):
             height=height,
             title=title,
             samples=samples,
+            vsync=True,
         )
         self.board_size = size
-        self.background_color = colors.BLACK
-        self.selected_tile_color = colors.GRAPE
+        self.background_color = colors.WHITE
+        self.selected_tile_color = colors.WHITE_SMOKE
         self.evaluator = evaluator
         self.player_starts = player_starts
         self.model_plays_itself = model_plays_itself
@@ -60,7 +61,7 @@ class Game(arcade.Window):
         # at intervals in order to have time to see what the model plays (else it
         # whould go too fast to see).
         self.timer: float = 0
-        # Interval between moves played by the model. Used when a model plays with
+        # Time interval between moves played by the model. Used when a model plays with
         # itself.
         self.interval = 0.05
         # The tile index that the mouse is hovering over.
@@ -86,7 +87,7 @@ class Game(arcade.Window):
         )
         menu_width = Params.menu_width
         menu_heigh = Params.menu_height
-        self.menu = Menu(menu_center, colors.LIGHT_GRAY, menu_width, menu_heigh)
+        self.menu = Menu(menu_center, colors.BLACK, menu_width, menu_heigh)
 
         # A list with all the valid tile coordinates, meaning from (0, 0),
         # (0, 1) ... (BOARD_SIZE, BOARD_SIZE)

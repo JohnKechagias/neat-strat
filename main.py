@@ -14,11 +14,11 @@ class GameVariation(StrEnum):
     PLAYER_VS_PLAYER = auto()
 
 
-TRAIN = True
+TRAIN = False
 ITERATIONS = 50
-PLAY = False
+PLAY = True
 PLAYER_STARTS = True
-GAME_VARIATION = GameVariation.MODEL_VS_MODEL
+GAME_VARIATION = GameVariation.PLAYER_VS_PLAYER
 
 
 def main():
@@ -42,7 +42,7 @@ def main():
         Params.board_height,
         Params.board_title,
         Params.board_size,
-        0,
+        10,
         evaluator,
         player_starts,
         model_plays_itself,

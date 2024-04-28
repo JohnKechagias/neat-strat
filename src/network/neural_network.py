@@ -93,7 +93,9 @@ def get_fitness(
     target = (0, 4) if player == Player.RED else (4, 0)
     for move in moves_to_consider:
         score_lost_due_to_position = target[0] - move[1][0] + target[1] - move[1][1]
-        fitness += min(max_score_gained_from_move - abs(score_lost_due_to_position), -1.0)
+        fitness += min(
+            max_score_gained_from_move - abs(score_lost_due_to_position), -1.0
+        )
 
     return fitness
 

@@ -2,7 +2,7 @@ import arcade
 from arcade.shape_list import Shape, create_rectangle_outline
 from arcade.types import Color
 
-from .constants import MENU_WIDTH, Action, Move, Point, colors
+from .constants import MENU_WIDTH, Action, Move, Point
 
 
 class Menu:
@@ -13,7 +13,7 @@ class Menu:
         self.height = height
         self.label_font_size = 16
         self.label_width = 20
-        self.label_color = colors.WHITE_SMOKE
+        self.label_color = color
         self.text_objects: list[arcade.Text] = []
 
         self.curr_player_text = arcade.Text(
