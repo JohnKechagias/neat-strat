@@ -130,3 +130,10 @@ dmypy.json
 
 # Stats folder
 stats/
+
+# Vimtex intermediate files
+doc.bbl
+doc.dvi
+doc.synctex.gz
+svg-inkscape/*
+doc.pdf
