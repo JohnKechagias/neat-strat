@@ -132,8 +132,13 @@ dmypy.json
 stats/
 
 # Vimtex intermediate files
-doc.bbl
-doc.dvi
+*.bbl
+*.dvi
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
 doc.synctex.gz
 svg-inkscape/*
-doc.pdf

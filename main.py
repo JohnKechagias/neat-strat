@@ -15,10 +15,10 @@ class GameVariation(StrEnum):
 
 
 TRAIN = False
-ITERATIONS = 50
+ITERATIONS = 200
 PLAY = True
 PLAYER_STARTS = True
-GAME_VARIATION = GameVariation.PLAYER_VS_PLAYER
+GAME_VARIATION = GameVariation.PLAYER_VS_MODEL
 
 
 def main():
@@ -32,7 +32,7 @@ def main():
     model_plays_itself = GAME_VARIATION == GameVariation.MODEL_VS_MODEL
     if GAME_VARIATION != GameVariation.PLAYER_VS_PLAYER:
         if genome is None:
-            with open("winner", "rb") as f:
+            with open("aggressive/generation_116_winner.pkl", "rb") as f:
                 genome = pickle.load(f)
 
         evaluator = FeedForwardNetwork.from_genome(genome).activate
