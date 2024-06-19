@@ -14,6 +14,8 @@ from .network.search import EndgameState, Searcher, get_default_state, get_endga
 from .parameters import Params
 from .tile import Tile
 
+MOVES = [((4, 0), (3, 1), 10), ((3, 1), (3, 2), 10), ((3, 2), (2, 3), 10)]
+
 
 class Game(arcade.Window):
     def __init__(
@@ -40,9 +42,10 @@ class Game(arcade.Window):
         self.evaluator = evaluator
         self.player_starts = player_starts
         self.model_plays_itself = model_plays_itself
-
         if self.evaluator is not None:
             self.searcher = Searcher(STORAGE_SIZE_MB, DEPTH)
+
+        self.paused: bool = True
 
     def setup(self):
         if self.evaluator is not None:
@@ -59,11 +62,11 @@ class Game(arcade.Window):
         # Helper variable that is used when a model plays with itself. Measures
         # the time elapsed since the last time a move was mode. Used to play moves
         # at intervals in order to have time to see what the model plays (else it
-        # whould go too fast to see).
+        # would go too fast to see).
         self.timer: float = 0
         # Time interval between moves played by the model. Used when a model plays with
         # itself.
-        self.interval = 0.05
+        self.interval = 0.1
         # The tile index that the mouse is hovering over.
         # If curr_tile is None, it means that the mouse isn't
         # currently hovering over a valid tile.
@@ -92,7 +95,7 @@ class Game(arcade.Window):
         # A list with all the valid tile coordinates, meaning from (0, 0),
         # (0, 1) ... (BOARD_SIZE, BOARD_SIZE)
         tile_coords = [Coords(i) for i in product(range(self.board_size), repeat=2)]
-        # A list that countains all of the tile instances. In this case, hexagons.
+        # A list that contains all of the tile instances. In this case, hexagons.
         self.tiles = [Tile(i) for i in tile_coords]
 
         # Populate the shape list with the default tile shapes.
@@ -166,14 +169,26 @@ class Game(arcade.Window):
         self.draw_time = timeit.default_timer() - draw_start_time
 
     def on_update(self, delta_time: float):
-        if not self.model_plays_itself or self.evaluator is None:
+        if self.paused:
             return
+        
+        # if not self.model_plays_itself or self.evaluator is None:
+        #   return
 
         if time.time() - self.timer < self.interval:
             return
 
+        global MOVES
+        if not len(MOVES):
+            self.paused = True
+            return
+
+        x = MOVES.pop(0)
+        self.make_move(x)
+        time.sleep(self.interval)
         move = self.searcher.search(self.evaluator, self.state)
         self.make_move(move)
+        time.sleep(self.interval)
         self.timer = time.time()
 
     def on_mouse_motion(self, x: int, y: int, dx: int, dy: int):
@@ -223,17 +238,22 @@ class Game(arcade.Window):
                         troops = self.selected_troops[player_to_move] * player_to_move
                         move = (self.start_tile_coords, self.curr_tile_coords, troops)
                         self.make_move(move)
+                        MOVES.append(move)
 
                         if self.evaluator is not None:
+                            time.sleep(self.interval)
                             move = self.searcher.search(self.evaluator, self.state)
                             self.make_move(move)
                     elif (
                         self.curr_tile_index == self.start_tile_index
                         and start_tile.troops < MAX_TROOPS
                     ):
-                        self.make_move((self.start_tile_coords, self.curr_tile_coords))
+                        move = (self.start_tile_coords, self.curr_tile_coords)
+                        self.make_move(move)
+                        MOVES.append(move)
 
                         if self.evaluator is not None:
+                            time.sleep(self.interval)
                             move = self.searcher.search(self.evaluator, self.state)
                             self.make_move(move)
 
@@ -252,6 +272,10 @@ class Game(arcade.Window):
             if self.selected_troops[self.state.player_to_move] > 1:
                 self.selected_troops[self.state.player_to_move] -= 1
 
+    def on_key_press(self, symbol: int, modifiers: int):
+        if symbol == arcade.key.SPACE:
+            self.paused = True if not self.paused else False
+
     def make_move(self, move: Move):
         self.player_move = move
 
@@ -265,6 +289,7 @@ class Game(arcade.Window):
         make_move(self.state, move)
         endgame_state = get_endgame_state(self.state.board)
         if endgame_state != EndgameState.ONGOING:
+            self.paused
             self.setup()
 
         self.end_round()

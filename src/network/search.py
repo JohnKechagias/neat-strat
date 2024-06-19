@@ -244,7 +244,6 @@ class Searcher:
                     and entry is not None
                     and entry.flag in (NodeFlag.LOWER_BOUND, NodeFlag.EXACT)
                 ):
-
                     undo_move(state)
                     score_to_beat = tt_score - SINGULAR_MOVE_MARGIN
                     r = 3 + depth // 6

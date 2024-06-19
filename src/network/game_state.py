@@ -19,7 +19,7 @@ class GameState:
 
 
 def make_move(state: GameState, move: Move):
-    # If its a production move.
+    # If it's a production move.
     if len(move) == 2:
         x, y = move[0]
 
@@ -34,7 +34,7 @@ def make_move(state: GameState, move: Move):
         state.board[x][y] = new_value
         state.hash ^= zobrist.get_hash(x, y, new_value)
 
-    # If its a reposition move.
+    # If it's a reposition move.
     elif len(move) == 3:
         source_x, source_y = move[0]
         target_x, target_y = move[1]

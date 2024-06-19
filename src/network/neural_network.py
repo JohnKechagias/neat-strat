@@ -6,6 +6,7 @@ from multiprocessing import Pool
 from pathlib import Path
 
 import neat
+import math
 import numpy as np
 from neat import FeedForwardNetwork, Genome
 from neat.utils import mean
@@ -66,8 +67,6 @@ def get_fitness(
 
     moves = len(move_record)
     players_population = int(np.sum(game_state.board))
-    win_bonus = fitness_threshold / 10
-    max_score_gained_from_move = 5.0
     capture_bonus = 8.0
 
     fitness = 0.0
@@ -75,27 +74,31 @@ def get_fitness(
     fitness += game_state.captures[player] * capture_bonus
 
     if endstate == EndgameState.ONGOING:
-        fitness += min(players_population * 2, fitness_threshold / 2)
+        fitness += min(players_population * 3, fitness_threshold / 8)
     elif endstate == won_status:
         print(f"Status: {endstate.name.title()}")
-        fitness += win_bonus
-        fitness += (max_moves - moves) * 5
+        fitness += fitness_threshold / 8
+        fitness += (max_moves - moves) * 2
     elif endstate == lost_status:
         print(f"Status: {endstate.name.title()}")
-        fitness += min(moves * 3, fitness_threshold / 3)
+        fitness += min(players_population * 2, fitness_threshold / 10)
 
     consider_move = lambda i: i % 2 if opponent_started else not i % 2
     moves_to_consider = [m for i, m in enumerate(move_record) if consider_move(i)]
 
-    # Aggressive settings. Player will rush to the center of the board.
+    # Aggressive settings. Player will rush to the centre of the board.
     # target = (2, 2)
     # Defensive settings. Each player will try to remain on his own side of the board.
-    target = (0, 4) if player == Player.RED else (4, 0)
+    # target = (0, 4) if player == Player.RED else (4, 0)
+    target = (2, 2)
     for move in moves_to_consider:
-        score_lost_due_to_position = target[0] - move[1][0] + target[1] - move[1][1]
-        fitness += min(
-            max_score_gained_from_move - abs(score_lost_due_to_position), -1.0
-        )
+        if len(move) == 2:
+            fitness += 4
+        elif len(move) == 3:
+            # score_lost_due_to_position = target[0] - move[1][0] + target[1] - move[1][1]
+            d_old = math.dist(move[0], target)
+            d_new = math.dist(move[1], target)
+            fitness += max(4 * (d_new - d_old), -1)
 
     return fitness
 

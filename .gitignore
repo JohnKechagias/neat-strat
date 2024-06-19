@@ -130,6 +130,8 @@ dmypy.json
 
 # Stats folder
 stats/
+*.log
+*.pkl
 
 # Vimtex intermediate files
 *.bbl
@@ -139,6 +141,16 @@ stats/
 *.blg
 *.fdb_latexmk
 *.fls
+*.lof
+*.lot
+*.out
+*.toc
 *.synctex.gz
 doc.synctex.gz
+*.tex
+
 svg-inkscape/*
+animations/*
+images/*
+*.bib
+generate_stats.py
