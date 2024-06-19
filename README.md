@@ -1,2 +1,3 @@
-# NeatStrat
-An application of the NEAT algorithm.
+# NEAT Strat
+
+Applications of the NEAT algorithm in deterministic game environments.
