@@ -3,9 +3,9 @@ from enum import StrEnum, auto
 
 from neat import FeedForwardNetwork
 
-from src.game import Game
-from src.network.neural_network import train
-from src.parameters import Params
+from neat_strat.game import Game
+from neat_strat.network.neural_network import train
+from neat_strat.parameters import Params
 
 
 class GameVariation(StrEnum):

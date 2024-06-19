@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "neat-strat"
+version = "1.0.0"
+description = "A NEAT inspired gameplay algorithm for training models to play board games."
+requires-python = ">=3.11"
+authors = [
+    {name = "John Kechagias", email = "john.kechagias@protonmail.com"},
+]
+readme = "README.md"
+license = {file = "LICENSE"}
+classifiers = [
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "beartype==0.17.2",
+    "matplotlib==3.8.3",
+    "mypy-extensions==1.0.0",
+    "nptyping==2.5.0",
+    "arcade @ git+https://github.com/pythonarcade/arcade.git@development",
+    "neat-proc @ git+https://github.com/JohnKechagias/neat-proc.git@main",
+]
+
+[project.optional-dependencies]
+tests = [
+    "pytest",
+    "pytest-cov",
+]
+lint = [
+    "black",
+    "isort",
+]
+
+[project.urls]
+Repository = "https://github.com/JohnKechagias/neat-strat.git"
+Issues = "https://github.com/JohnKechagias/neat-strat/issues"
+
+[tool.hatch.metadata]
+allow-direct-references = true

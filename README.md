@@ -1,3 +1,3 @@
 # NEAT Strat
 
-Applications of the NEAT algorithm in deterministic game environments.
+A NEAT inspired gameplay algorithm for training models to play board games.
